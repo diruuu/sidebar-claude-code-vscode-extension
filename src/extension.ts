@@ -22,6 +22,14 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
+    // Register command to open Claude Code sidebar
+    context.subscriptions.push(
+        vscode.commands.registerCommand('claudeCode.openTerminal', () => {
+            // Focus the Claude Code view in the sidebar
+            vscode.commands.executeCommand('claudeCodeView.focus');
+        })
+    );
+
     // Clean up PTY process on deactivation
     context.subscriptions.push({
         dispose: () => {
@@ -82,12 +90,32 @@ class ClaudeCodeViewProvider implements vscode.WebviewViewProvider {
         });
     }
 
+    private getWorkingDirectory(): string {
+        // 1. Try to get the first workspace folder
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            return vscode.workspace.workspaceFolders[0].uri.fsPath;
+        }
+
+        // 2. Fallback to home directory
+        if (process.env.HOME) {
+            return process.env.HOME;
+        }
+
+        // 3. Last resort: current working directory
+        return process.cwd();
+    }
+
     private startTerminal() {
         if (ptyProcess) {
             return;
         }
 
         try {
+            // Get configuration
+            const config = vscode.workspace.getConfiguration('claudeCodeSidebar');
+            const command = config.get<string>('command', 'claude');
+            const additionalArgs = config.get<string>('additionalArgs', '--ide');
+
             // Determine the shell to use
             const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : '/bin/bash');
 
@@ -96,7 +124,7 @@ class ClaudeCodeViewProvider implements vscode.WebviewViewProvider {
                 name: 'xterm-256color',
                 cols: 80,
                 rows: 30,
-                cwd: process.env.HOME || process.cwd(),
+                cwd: this.getWorkingDirectory(),
                 env: process.env as { [key: string]: string }
             });
 
@@ -117,10 +145,13 @@ class ClaudeCodeViewProvider implements vscode.WebviewViewProvider {
                 ptyProcess = undefined;
             });
 
-            // Automatically run 'claude' command
+            // Automatically run configurable command
             setTimeout(() => {
                 if (ptyProcess) {
-                    ptyProcess.write('claude\r');
+                    const fullCommand = additionalArgs
+                        ? `${command} ${additionalArgs}\r`
+                        : `${command}\r`;
+                    ptyProcess.write(fullCommand);
                 }
             }, 100);
 

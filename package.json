@@ -2,20 +2,18 @@
   "name": "claude-code-sidebar",
   "displayName": "Claude Code Sidebar",
   "description": "Integrate Claude Code terminal into VS Code sidebar",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "publisher": "diruuu",
+  "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/diruuu/claude-code-sidebar"
+    "url": "https://github.com/diruuu/sidebar-claude-code-vscode-extension"
   },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onView:claudeCodeView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -24,7 +22,7 @@
         {
           "id": "claude-code-sidebar",
           "title": "Claude Code",
-          "icon": "resources/claude-icon.svg"
+          "icon": "resources/icon.png"
         }
       ]
     },
@@ -41,6 +39,30 @@
       {
         "command": "claudeCode.openTerminal",
         "title": "Open Claude Code"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Code Sidebar",
+      "properties": {
+        "claudeCodeSidebar.command": {
+          "type": "string",
+          "default": "claude",
+          "description": "The command to run in the terminal (e.g., 'claude', 'npx claude', or custom path)",
+          "scope": "window"
+        },
+        "claudeCodeSidebar.additionalArgs": {
+          "type": "string",
+          "default": "--ide",
+          "description": "Additional arguments to pass to the Claude command",
+          "scope": "window"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "claudeCode.openTerminal",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c"
       }
     ]
   },
